@@ -1,0 +1,8 @@
+Command: /usr/lib/snapd/snap-exec, Len: 24
+Args: p#T�Z, Len: 6
+Command: /snap/docker/3064/bin/docker, Len: 28
+[ERROR aya_log] received invalid utf8 string: invalid utf-8 sequence of 1 bytes from index 0
+[ERROR aya_log] received invalid utf8 string: invalid utf-8 sequence of 1 bytes from index 0
+Args: �en: 3
+[INFO  ebpf_tracepoint] command:/snap/docker/3064/bin/docker, args:, targv: 
+[INFO  ebpf_tracepoint] tracepoint sys_enter_execve called

@@ -1,0 +1,18 @@
+[package]
+name = "ebpf-tracepoint-ebpf"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ebpf-tracepoint-common = { path = "../ebpf-tracepoint-common" }
+
+
+aya-ebpf = { workspace = true }
+aya-log-ebpf = { workspace = true }
+
+[build-dependencies]
+which = { workspace = true }
+
+[[bin]]
+name = "ebpf-tracepoint"
+path = "src/main.rs"
