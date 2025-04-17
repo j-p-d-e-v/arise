@@ -37,8 +37,8 @@ fn try_ebpf_tracepoint(ctx: TracePointContext) -> Result<u32, i64> {
     let mut argvs_buf: [[u8; ARGV_LEN]; ARGV_OFFSET] = [[0u8; ARGV_LEN]; ARGV_OFFSET];
     let argv = unsafe { ctx.read_at::<*const *const u8>(24)? };
 
-    for i in 0..4 {
-        let argv_ptr: *const u8 = unsafe { bpf_probe_read_user(argv.offset(i + 1))? };
+    for i in 0..ARGV_OFFSET {
+        let argv_ptr: *const u8 = unsafe { bpf_probe_read_user(argv.offset(i as isize + 1))? };
         if argv_ptr.is_null() {
             break;
         }
