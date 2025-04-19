@@ -6,6 +6,7 @@ use aya_ebpf::{
     macros::{map, tracepoint},
     maps::perf::PerfEventArray,
     programs::TracePointContext,
+    EbpfContext,
 };
 use ebpf_tracepoint_common::{ARGV_LEN, ARGV_OFFSET, COMMAND_LEN};
 
@@ -16,6 +17,10 @@ pub struct CommandInfo {
     pub argvs_offset: [usize; ARGV_OFFSET],
     pub command: [u8; COMMAND_LEN],
     pub argvs: [[u8; ARGV_LEN]; ARGV_OFFSET],
+    pub tgid: u32,
+    pub pid: u32,
+    pub gid: u32,
+    pub uid: u32,
 }
 #[map]
 static COMMAND_EVENTS: PerfEventArray<CommandInfo> = PerfEventArray::new(0);
@@ -44,8 +49,14 @@ fn try_ebpf_tracepoint(ctx: TracePointContext) -> Result<u32, i64> {
         }
         let argv: &[u8] =
             unsafe { bpf_probe_read_user_str_bytes(argv_ptr, &mut argvs_buf[i as usize])? };
-        argvs_len[i as usize] = argv.len();
+        let argv_len = argv.len();
+        argvs_len[i as usize] = if argv_len >= 32 { 32 } else { argv_len };
     }
+
+    let tgid: u32 = ctx.tgid();
+    let gid: u32 = ctx.gid();
+    let pid: u32 = ctx.pid();
+    let uid: u32 = ctx.uid();
 
     COMMAND_EVENTS.output(
         &ctx,
@@ -54,6 +65,10 @@ fn try_ebpf_tracepoint(ctx: TracePointContext) -> Result<u32, i64> {
             argvs_offset: argvs_len,
             command: command_buf,
             argvs: argvs_buf,
+            uid: uid,
+            gid: gid,
+            pid: pid,
+            tgid: tgid,
         },
         0,
     );

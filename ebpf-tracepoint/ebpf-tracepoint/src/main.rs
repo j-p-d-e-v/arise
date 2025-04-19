@@ -1,11 +1,20 @@
 use aya::programs::TracePoint;
 #[rustfmt::skip]
-use log::{debug, warn};
+use log::{debug, warn, error};
 use aya::{maps::perf::AsyncPerfEventArray, util::online_cpus, Pod};
 use bytemuck::{Pod as BPod, Zeroable};
 use bytes::BytesMut;
+use clap::Parser;
+use ebpf_tracepoint::{send_log, ApiServerConfig, AppConfig, CommandExecutionRequestForm};
 use ebpf_tracepoint_common::{ARGV_LEN, ARGV_OFFSET};
 use tokio::signal;
+
+#[derive(Parser, Debug)]
+struct Args {
+    #[arg(short, long, default_value = "Config.toml")]
+    config_path: String,
+}
+
 #[repr(C)]
 #[derive(Copy, Clone, Debug, Zeroable, BPod)]
 pub struct CommandInfo {
@@ -13,11 +22,23 @@ pub struct CommandInfo {
     pub argvs_offset: [usize; ARGV_OFFSET],
     pub command: [u8; 64],
     pub argvs: [[u8; ARGV_LEN]; ARGV_OFFSET],
+    pub tgid: u32,
+    pub pid: u32,
+    pub gid: u32,
+    pub uid: u32,
 }
 unsafe impl Pod for CommandInfo {}
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     env_logger::init();
+    let args = Args::parse();
+    let config_path: String = args.config_path;
+
+    let app_config: AppConfig = match AppConfig::load(Some(config_path)) {
+        Ok(config) => config,
+        Err(error) => panic!("{}", error),
+    };
+    let api_server_config: ApiServerConfig = app_config.api_server;
 
     // Bump the memlock rlimit. This is needed for older kernels that don't use the
     // new memcg based accounting, see https://lwn.net/Articles/837122/
@@ -52,6 +73,7 @@ async fn main() -> anyhow::Result<()> {
     for cpu_id in online_cpus().map_err(|(_, error)| error)? {
         let mut buf = perf_command_events.open(cpu_id, None)?;
 
+        let api_base_url = api_server_config.base_url.clone();
         tokio::task::spawn(async move {
             let mut buffers = (0..10)
                 .map(|_| BytesMut::with_capacity(1024))
@@ -76,7 +98,30 @@ async fn main() -> anyhow::Result<()> {
                                 argsv_str.push_str(&String::from_utf8_lossy(&argv_buf[..argv_len]));
                                 argsv_str.push_str(" ");
                             }
-                            debug!("Command: {} {}", command_str, argsv_str.trim_end());
+                            debug!(
+                                "Command: {} {} | pid: {} | gid: {} | tgid: {} | uid: {}",
+                                command_str,
+                                argsv_str.trim_end(),
+                                info.pid,
+                                info.gid,
+                                info.tgid,
+                                info.uid
+                            );
+                            if let Err(error) = send_log(
+                                api_base_url.clone(),
+                                CommandExecutionRequestForm {
+                                    command: command_str.to_string(),
+                                    args: argsv_str.trim_end().to_string(),
+                                    tgid: info.tgid,
+                                    gid: info.gid,
+                                    pid: info.pid,
+                                    uid: info.uid,
+                                },
+                            )
+                            .await
+                            {
+                                error!("[COMMAND EXECUTION REQUEST ERROR] send_log: {}", error);
+                            }
                         }
                     }
                     Err(err) => {

@@ -1,0 +1,12 @@
+[http_server]
+port = 8080
+host = "0.0.0.0"
+workers = 4
+log_level = "Debug"
+
+[database_server]
+address = "127.0.0.1:4050"
+username = "root"
+password = "root"
+namespace = "arise_dev"
+database = "arise"
