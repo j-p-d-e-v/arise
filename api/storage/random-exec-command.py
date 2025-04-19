@@ -3,6 +3,7 @@ import random
 import threading
 
 commands = [
+
     "ls -l",
     "pwd",
     "whoami",
@@ -13,6 +14,36 @@ commands = [
     "free -m",
     "ps aux",
     "hostname",
+    "id",
+    "who",
+    "w",
+    "top -b -n1",
+    "netstat -tunlp",
+    "dmesg | tail",
+    "vmstat",
+    "iostat",
+    "lscpu",
+    "lsblk",
+    "uptime",
+    "uname -r",
+    "uname -m",
+    "whoami",
+    "groups",
+    "cat /etc/os-release",
+    "lsof -i",
+    "ss -tuln",
+    "ip a",
+    "ip r",
+    "traceroute google.com",
+    "ping -c 1 8.8.8.8",
+    "curl -I https://google.com",
+    "head -n 5 /etc/passwd",
+    "tail -n 5 /etc/passwd",
+    "du -sh /tmp",
+    "df -i",
+    "find /tmp -type f | wc -l",
+    "history | tail -n 5",
+    "uptime -p"
 ]
 
 def run_random_commands():

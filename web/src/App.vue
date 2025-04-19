@@ -4,8 +4,7 @@ import CommandExecutionDashboard from "./components/CommandExecutionDashboard.vu
 </script>
 
 <template>
-  <div class="grid grid-cols-[20%_80%] h-full">
-    <div class="p-3 h-full bg-stone-800">Nav</div>
+  <div class="grid grid-cols-[100%] h-full">
     <div class="h-full bg-stone-100 text-stone-900">
       <CommandExecutionDashboard />
     </div>

@@ -10,6 +10,14 @@ export interface CommandExecutionData {
   gid: number
 }
 
+
+export interface CommandExecutionPaginatedResponse {
+  data: CommandExecutionData[],
+  limit: number,
+  offset: number,
+  total: number
+}
+
 export interface CommandExecutionStats {
   total: number,
   command: string
