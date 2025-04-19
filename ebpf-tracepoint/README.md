@@ -58,23 +58,3 @@ dual licensed as above, without any additional terms or conditions.
 
 
 
-root@jp:/mnt/coding/coding/ebpf-tracepoint/ebpf-tracepoint# cat /sys/kernel/tracing/events/syscalls/sys_e
-nter_execve/format 
-name: sys_enter_execve
-ID: 786
-format:
-        field:unsigned short common_type;       offset:0;       size:2; signed:0;
-        field:unsigned char common_flags;       offset:2;       size:1; signed:0;
-        field:unsigned char common_preempt_count;       offset:3;       size:1; signed:0;
-        field:int common_pid;   offset:4;       size:4; signed:1;
-
-        field:int __syscall_nr; offset:8;       size:4; signed:1;
-        field:const char * filename;    offset:16;      size:8; signed:0;
-        field:const char *const * argv; offset:24;      size:8; signed:0;
-        field:const char *const * envp; offset:32;      size:8; signed:0;
-
-print fmt: "filename: 0x%08lx, argv: 0x%08lx, envp: 0x%08lx", ((unsigned long)(REC->filename)), ((unsigne
-d long)(REC->argv)), ((unsigned long)(REC->envp))
-root@jp:/mnt/coding/coding/ebpf-tracepoint/ebpf-tracepoint# vk
-
-

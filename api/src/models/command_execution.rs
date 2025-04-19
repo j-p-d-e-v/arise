@@ -97,7 +97,7 @@ impl CommandExecution {
 
         match self.db.get_client().read() {
             Ok(db_client) => {
-                match db_client.query("SELECT `command`,count(`command`) as total FROM type::table($table) GROUP BY `command`")
+                match db_client.query("SELECT * FROM (SELECT command, count(command) AS total FROM command_execution GROUP BY command) ORDER BY total NUMERIC DESC LIMIT 20;")
                     .bind(("table",Self::table()))
                     .await
                 {

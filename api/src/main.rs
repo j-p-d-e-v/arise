@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use api::config::{AppConfig, DatabaServerConfig, HttpServerConfig};
 use api::db::Db;
@@ -28,7 +29,9 @@ async fn main() -> Result<(), String> {
     env_logger::init();
     let db: Arc<Db> = Arc::new(Db::new(database_server_config).await?);
     match HttpServer::new(move || {
+        let cors = Cors::default().allow_any_origin();
         App::new()
+            .wrap(cors)
             .app_data(web::Data::new(AppState { db: db.clone() }))
             .route("/ping", web::get().to(ping::pong))
             .service(
