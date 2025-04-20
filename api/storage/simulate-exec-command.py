@@ -1,9 +1,9 @@
-import os
 import random
 import threading
+import subprocess
+import shlex
 
 commands = [
-
     "ls -l",
     "pwd",
     "whoami",
@@ -47,14 +47,19 @@ commands = [
 ]
 
 def run_random_commands():
-    repeat = random.randint(1000, 10000)
+    repeat = random.randint(1000, 30000)
     for _ in range(repeat):
         command = random.choice(commands)
-        os.system(command)
+        try:
+            # safer splitting of command into list
+            subprocess.run(shlex.split(command), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except Exception as e:
+            pass
+            #print(f"Failed to run command: {command}\nError: {e}")
 
 threads = []
 
-# Number of threads you want
+# Number of threads
 num_threads = 10
 
 for _ in range(num_threads):

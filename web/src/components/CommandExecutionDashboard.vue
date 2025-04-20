@@ -15,8 +15,8 @@ const chart = ref(null);
 echarts.registerTheme("echarts_theme", echarts_theme);
 
 onMounted(() => {
-  configureChart();
   getStats();
+  configureChart();
   getExecutedCommands();
 });
 function configureChart(data: CommandExecutionStats[]) {
@@ -38,6 +38,7 @@ function configureChart(data: CommandExecutionStats[]) {
 
 }
 function updateChart(data: CommandExecutionStats[]) {
+
   chart.value.setOption({
     yAxis: {
       type: "category",
@@ -54,7 +55,7 @@ function updateChart(data: CommandExecutionStats[]) {
         type: "bar",
         showBackground: true,
         realtimeSort: true,
-        barWidth: 30,
+        barWidth: 20,
         large: true,
         barGap: "30%",
         backgroundStyle: {
@@ -74,15 +75,21 @@ function getStats() {
   stats_loader.value = true;
   const api = new CommandExecution();
   api.stats().then((response) => {
-    let data: CommandExecutionStats[] = response.data;
-    stats_data.value = data;
-    updateChart(data);
+    let result: CommandExecutionStats[] = response.data;
+
+    stats_data.value = result;
+    if (result.length > 0) {
+      if (chart.value == null) {
+      }
+    }
+    if (chart.value !== null) {
+      updateChart(result);
+    }
     setTimeout(() => getStats(), 500);
   }).catch((error) => {
     console.error(error);
-  }).finally(() => {
     stats_loader.value = false;
-  });
+  })
 }
 
 function getExecutedCommands() {
@@ -92,7 +99,7 @@ function getExecutedCommands() {
     let data: CommandExecutionPaginatedResponse = response.data;
     paginated_data.value = data;
 
-    setTimeout(() => getExecutedCommands(), 1500);
+    setTimeout(() => getExecutedCommands(), 1000);
   }).catch((error) => {
     console.error(error);
   }).finally(() => {
@@ -105,38 +112,43 @@ function getExecutedCommands() {
 <template>
   <div class="p-3 h-full" id="command-execution-container">
     <div class="rounded-sm border-1 border-stone-600">
-      <h3 class="p-3 pt-6 pb-0 text-xl font-semibold text-center text-white align-center">Command Execution Counts</h3>
+      <h3 class="p-3 pt-6 pb-0 text-xl font-semibold text-center text-white align-center">
+        Command Execution Counts Chart
+      </h3>
       <div id="command-execution-chart"></div>
-      <template v-if="paginated_data">
-        <h3 class="p-3 pb-0 font-semibold text-white">Recently Executed Commands</h3>
-        <div class="p-3">
-          <table class="table text-white border-1 border-stone-600 table-sm">
-            <thead>
-              <tr>
-                <th>Command</th>
-                <th>Arguments</th>
-                <th>PID</th>
-                <th>TGID</th>
-                <th>GID</th>
-                <th>UID</th>
-                <th>Timestamp</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(item, key) in paginated_data.data" :key="key">
-                <th>{{ item.command }}</th>
-                <td>{{ item.args }}</td>
-                <td>{{ item.pid }}</td>
-                <td>{{ item.tgid }}</td>
-                <td>{{ item.gid }}</td>
-                <td>{{ item.uid }}</td>
-                <td>{{ item.timestamp }}</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </template>
+      <div class="content-center pb-15 h-[30px]" align="center">
+        <span class="text-white loading loading-spinner loading-sm" v-if="stats_loader"></span>
+      </div>
     </div>
+    <template v-if="paginated_data">
+      <div class="p-6 mt-3 rounded-sm border-1 border-stone-600">
+        <h3 class="p-0 mb-3 font-semibold text-white">Recently Executed Commands</h3>
+        <table class="table text-white border-1 border-stone-600 table-sm">
+          <thead>
+            <tr>
+              <th>Command</th>
+              <th>Arguments</th>
+              <th>PID</th>
+              <th>TGID</th>
+              <th>GID</th>
+              <th>UID</th>
+              <th>Timestamp</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(item, key) in paginated_data.data" :key="key">
+              <th>{{ item.command }}</th>
+              <td>{{ item.args }}</td>
+              <td>{{ item.pid }}</td>
+              <td>{{ item.tgid }}</td>
+              <td>{{ item.gid }}</td>
+              <td>{{ item.uid }}</td>
+              <td>{{ item.timestamp }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </template>
   </div>
 </template>
 
@@ -147,6 +159,6 @@ function getExecutedCommands() {
 
 #command-execution-chart {
   width: auto;
-  height: 900px;
+  height: 700px;
 }
 </style>

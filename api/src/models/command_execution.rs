@@ -133,7 +133,7 @@ impl CommandExecution {
                     .query(
                         r#"
                     SELECT count() as total FROM type::table($table) GROUP BY count;
-                    SELECT * FROM type::table($table) LIMIT $limit START $offset;
+                    SELECT * FROM type::table($table) ORDER BY timestamp DESC LIMIT $limit START $offset;
                 "#,
                     )
                     .bind(("table", Self::table()))
