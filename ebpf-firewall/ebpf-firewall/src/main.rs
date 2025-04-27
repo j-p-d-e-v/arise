@@ -1,10 +1,24 @@
 use anyhow::Context as _;
-use aya::programs::{Xdp, XdpFlags};
+use aya::{
+    programs::{Xdp, XdpFlags},
+    Pod,
+};
 use clap::Parser;
+use network_types::ip::IpProto;
 #[rustfmt::skip]
 use log::{debug, warn};
+use aya::maps::lpm_trie::{Key, LpmTrie};
 use tokio::signal;
 
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct Rule {
+    pub from_port: Option<u16>,
+    pub to_port: Option<u16>,
+    pub status: bool,
+    pub protocol: IpProto,
+}
+unsafe impl Pod for Rule {}
 #[derive(Debug, Parser)]
 struct Opt {
     #[clap(short, long, default_value = "eth0")]
@@ -45,6 +59,21 @@ async fn main() -> anyhow::Result<()> {
     program.load()?;
     program.attach(&iface, XdpFlags::default())
         .context("failed to attach the XDP program with default flags - try changing XdpFlags::default() to XdpFlags::SKB_MODE")?;
+    let firewall_rules_map = ebpf.map_mut("FIREWALL_RULES").unwrap();
+    let mut firewall_rules: LpmTrie<_, [u8; 4], Rule> = LpmTrie::try_from(firewall_rules_map)?;
+    let key = Key::new(24, [192, 168, 211, 0]);
+    firewall_rules
+        .insert(
+            &key,
+            &Rule {
+                from_port: None,
+                to_port: None,
+                status: false,
+                protocol: IpProto::Icmp,
+            },
+            0,
+        )
+        .unwrap();
 
     let ctrl_c = signal::ctrl_c();
     println!("Waiting for Ctrl-C...");

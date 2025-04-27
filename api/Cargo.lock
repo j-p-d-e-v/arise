@@ -381,6 +381,7 @@ dependencies = [
  "chrono",
  "clap",
  "env_logger",
+ "network-types",
  "serde",
  "serde_json",
  "surrealdb",
@@ -2459,6 +2460,12 @@ dependencies = [
  "num-traits",
  "rand 0.8.5",
 ]
+
+[[package]]
+name = "network-types"
+version = "0.0.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2df15b1cb023b9d205ae287d5dbe74510ae4d62b5131ceec516f4913ed05230"
 
 [[package]]
 name = "new_debug_unreachable"
