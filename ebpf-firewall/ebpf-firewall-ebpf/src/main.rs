@@ -133,22 +133,16 @@ fn checked_firewall_rule(
     }
     xdp_action::XDP_DROP
 }
+
 fn try_ebpf_firewall(ctx: XdpContext) -> Result<u32, ()> {
-    //info!(&ctx, "received a packet");
     let eth_hdr: *const EthHdr = unsafe { ptr_at(&ctx, 0)? };
     match unsafe { *eth_hdr }.ether_type {
         EtherType::Ipv4 => {
             let ipv4_hdr: *const Ipv4Hdr = unsafe { ptr_at(&ctx, EthHdr::LEN)? };
             let source_addr = unsafe { (*ipv4_hdr).src_addr() };
-            let total_len = unsafe { *ipv4_hdr }.total_len();
+//            let total_len = unsafe { *ipv4_hdr }.total_len();
             let source_ipv4: [u8; 4] = source_addr.octets();
             let protocol: IpProto = unsafe { (*ipv4_hdr).proto };
-            // info!(&ctx, "Protocol: {} ", procotol_to_string(&protocol));
-            // info!(
-            //     &ctx,
-            //     "IP: {}.{}.{}.{}", source_ipv4[0], source_ipv4[1], source_ipv4[2], source_ipv4[3]
-            // );
-            // info!(&ctx, "Total Len: {}", total_len);
             match &protocol {
                 &IpProto::Tcp => {
                     let tcp_hdr: *const TcpHdr =

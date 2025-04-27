@@ -2,7 +2,7 @@ use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};
 use api::config::{AppConfig, DatabaServerConfig, HttpServerConfig};
 use api::db::Db;
-use api::services::{command_execution, ping};
+use api::services::{command_execution, firewall_rule, ping};
 use api::AppState;
 use clap::Parser;
 use env_logger;
@@ -45,6 +45,10 @@ async fn main() -> Result<(), String> {
                         "/stats",
                         web::get().to(command_execution::executed_command_stats),
                     ),
+            )
+            .service(
+                web::scope("/firewall-rule")
+                    .route("/list", web::get().to(firewall_rule::get_firewall_rules)),
             )
     })
     .bind((http_server_config.host.as_str(), http_server_config.port))
