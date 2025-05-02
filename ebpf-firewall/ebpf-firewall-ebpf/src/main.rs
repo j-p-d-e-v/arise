@@ -6,7 +6,7 @@ use core::mem;
 use aya_ebpf::{
     bindings::xdp_action,
     macros::{map, xdp},
-    maps::{lpm_trie::Key, LpmTrie, PerfEventArray},
+    maps::{lpm_trie::Key, Array, HashMap, LpmTrie, PerfEventArray},
     programs::XdpContext,
 };
 use aya_log_ebpf::info;
@@ -35,6 +35,9 @@ pub struct FirewallLog {
 
 #[map]
 static FIREWALL_RULES: LpmTrie<[u8; 4], Rule> = LpmTrie::with_max_entries(1024, 0);
+
+#[map]
+static FIREWALL_CIDRS: HashMap<u16, u16> = HashMap::with_max_entries(32, 0);
 
 #[map]
 static FIREWALL_LOG: PerfEventArray<FirewallLog> = PerfEventArray::new(0);
@@ -99,12 +102,15 @@ fn checked_firewall_rule(
 ) -> aya_ebpf::bindings::xdp_action::Type {
     let mut rule: Option<&Rule> = None;
     let mut status: bool = true;
+
     for value in 0..33 {
-        let prefix_length: u32 = 32 - value as u32;
-        let source_key = Key::new(prefix_length, source_ipv4.clone());
-        if let Some(item) = FIREWALL_RULES.get(&source_key) {
-            rule = Some(item);
-            break;
+        let index: u16 = 32 - value;
+        if let Some(prefix_length) = unsafe { FIREWALL_CIDRS.get(&index) } {
+            let source_key = Key::new(*prefix_length as u32, source_ipv4.clone());
+            if let Some(item) = FIREWALL_RULES.get(&source_key) {
+                rule = Some(item);
+                break;
+            }
         }
     }
     if let Some(rule) = rule {
@@ -140,7 +146,7 @@ fn try_ebpf_firewall(ctx: XdpContext) -> Result<u32, ()> {
         EtherType::Ipv4 => {
             let ipv4_hdr: *const Ipv4Hdr = unsafe { ptr_at(&ctx, EthHdr::LEN)? };
             let source_addr = unsafe { (*ipv4_hdr).src_addr() };
-//            let total_len = unsafe { *ipv4_hdr }.total_len();
+            //            let total_len = unsafe { *ipv4_hdr }.total_len();
             let source_ipv4: [u8; 4] = source_addr.octets();
             let protocol: IpProto = unsafe { (*ipv4_hdr).proto };
             match &protocol {

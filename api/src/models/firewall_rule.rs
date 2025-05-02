@@ -11,6 +11,7 @@ pub struct FirewallRuleData {
     pub cidr: u16,
     pub from_port: Option<u16>,
     pub to_port: Option<u16>,
+    pub status: bool,
 }
 impl Default for FirewallRuleData {
     fn default() -> Self {
@@ -21,6 +22,7 @@ impl Default for FirewallRuleData {
             protocol: IpProtocol::Undefined,
             from_port: None,
             to_port: None,
+            status: false,
         }
     }
 }
@@ -38,6 +40,7 @@ impl FirewallRule {
     pub fn table() -> String {
         "firewall_rule".to_string()
     }
+
     pub async fn create(&self, data: FirewallRuleData) -> Result<FirewallRuleData, String> {
         let _ = self.db.connect().await?;
         match self.db.get_client().read() {
@@ -53,7 +56,6 @@ impl FirewallRule {
                         }
                         return Err("[FIREWALL_RULE ERROR] create: value not found".to_string());
                     }
-
                     Err(error) => {
                         return Err(format!(
                             "[FIREWALL_RULE ERROR] create {}",
@@ -140,6 +142,7 @@ mod test_firewall_rule {
             id: None,
             ip: [192, 168, 211, 128],
             cidr: 32,
+            status: false,
             protocol: IpProtocol::Tcp,
             from_port: Some(2000),
             to_port: Some(3000),
@@ -153,5 +156,29 @@ mod test_firewall_rule {
         assert!(data.len() > 0, "expected atleast 1 record");
         let removed = api.remove(created.id.unwrap()).await;
         assert!(removed.is_ok(), "{:?}", removed);
+
+        let data: FirewallRuleData = FirewallRuleData {
+            id: None,
+            ip: [192, 168, 211, 1],
+            cidr: 32,
+            status: false,
+            protocol: IpProtocol::Tcp,
+            from_port: Some(2000),
+            to_port: Some(3000),
+        };
+        let result = api.create(data).await;
+        assert!(result.is_ok(), "{:?}", result.err());
+
+        let data: FirewallRuleData = FirewallRuleData {
+            id: None,
+            ip: [192, 168, 211, 1],
+            cidr: 32,
+            status: false,
+            protocol: IpProtocol::Icmp,
+            from_port: None,
+            to_port: None,
+        };
+        let result = api.create(data).await;
+        assert!(result.is_ok(), "{:?}", result.err());
     }
 }
