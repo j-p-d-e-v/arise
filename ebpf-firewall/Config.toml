@@ -1,2 +1,7 @@
 [api_server]
 base_url = "http://127.0.0.1:8080"
+
+[ebpf]
+layer = 3
+interface = "ens33"
+fwr_update_duration = 5

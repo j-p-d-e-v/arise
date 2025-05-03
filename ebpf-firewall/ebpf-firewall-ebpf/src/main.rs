@@ -6,7 +6,7 @@ use core::mem;
 use aya_ebpf::{
     bindings::xdp_action,
     macros::{map, xdp},
-    maps::{lpm_trie::Key, Array, HashMap, LpmTrie, PerfEventArray},
+    maps::{lpm_trie::Key, HashMap, LpmTrie, PerfEventArray},
     programs::XdpContext,
 };
 use aya_log_ebpf::info;
@@ -29,8 +29,9 @@ pub struct Rule {
 #[derive(Clone, Copy)]
 pub struct FirewallLog {
     pub ip: [u8; 4],
-    pub port: Option<u16>,
-    pub protocol: IpProto,
+    pub port: u16,
+    pub protocol: u8,
+    pub status: u8,
 }
 
 #[map]
@@ -79,7 +80,7 @@ fn procotol_to_string(protocol: &IpProto) -> &str {
 fn check_port(source_port: u16, from_port: Option<u16>, to_port: Option<u16>) -> bool {
     if let Some(from_port) = from_port {
         if let Some(to_port) = to_port {
-            if from_port >= source_port && to_port <= source_port {
+            if from_port <= source_port && to_port >= source_port {
                 return true;
             }
         } else {
@@ -115,16 +116,6 @@ fn checked_firewall_rule(
     }
     if let Some(rule) = rule {
         if protocol == &rule.protocol {
-            info!(
-                ctx,
-                "Protocol: {}, IP Address: {}.{}.{}.{}, Port:{}",
-                procotol_to_string(protocol),
-                source_ipv4[0],
-                source_ipv4[1],
-                source_ipv4[2],
-                source_ipv4[3],
-                source_port.unwrap_or(0)
-            );
             if let Some(source_port) = source_port {
                 if check_port(source_port, rule.from_port, rule.to_port) {
                     status = rule.status;
@@ -137,6 +128,26 @@ fn checked_firewall_rule(
     if status {
         return xdp_action::XDP_PASS;
     }
+    info!(
+        ctx,
+        "[DROPPED] Protocol: {}, IP Address: {}.{}.{}.{}, Port:{}",
+        procotol_to_string(protocol),
+        source_ipv4[0],
+        source_ipv4[1],
+        source_ipv4[2],
+        source_ipv4[3],
+        source_port.unwrap_or(0)
+    );
+    FIREWALL_LOG.output(
+        ctx,
+        &FirewallLog {
+            ip: source_ipv4,
+            status: 0,
+            port: source_port.unwrap_or(0),
+            protocol: *protocol as u8,
+        },
+        0,
+    );
     xdp_action::XDP_DROP
 }
 

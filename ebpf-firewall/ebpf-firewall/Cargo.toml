@@ -14,6 +14,8 @@ aya-log = { workspace = true }
 env_logger = { workspace = true }
 libc = { workspace = true }
 log = { workspace = true }
+bytes = { workspace = true}
+bytemuck = { workspace = true}
 tokio = { workspace = true, features = [
     "macros",
     "rt",

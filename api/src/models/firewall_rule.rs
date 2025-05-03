@@ -9,6 +9,7 @@ pub struct FirewallRuleData {
     pub ip: [u8; 4],
     pub protocol: IpProtocol,
     pub cidr: u16,
+    pub layer: u8,
     pub from_port: Option<u16>,
     pub to_port: Option<u16>,
     pub status: bool,
@@ -19,6 +20,7 @@ impl Default for FirewallRuleData {
             id: None,
             ip: [0; 4],
             cidr: 0,
+            layer: 4,
             protocol: IpProtocol::Undefined,
             from_port: None,
             to_port: None,
@@ -96,14 +98,15 @@ impl FirewallRule {
         }
     }
 
-    pub async fn list(&self) -> Result<Vec<FirewallRuleData>, String> {
+    pub async fn list(&self, layer: u8) -> Result<Vec<FirewallRuleData>, String> {
         let _ = self.db.connect().await?;
 
         match self.db.get_client().read() {
             Ok(db_client) => {
                 match db_client
-                    .query("SELECT * FROM type::table($table);")
+                    .query("SELECT * FROM type::table($table) WHERE layer=$layer;")
                     .bind(("table", Self::table()))
+                    .bind(("layer", layer))
                     .await
                 {
                     Ok(mut response) => match response.take::<Vec<FirewallRuleData>>(0) {
@@ -142,6 +145,7 @@ mod test_firewall_rule {
             id: None,
             ip: [192, 168, 211, 128],
             cidr: 32,
+            layer: 4,
             status: false,
             protocol: IpProtocol::Tcp,
             from_port: Some(2000),
@@ -150,7 +154,7 @@ mod test_firewall_rule {
         let result = api.create(data).await;
         assert!(result.is_ok(), "{:?}", result.err());
         let created = result.unwrap();
-        let result = api.list().await;
+        let result = api.list(4).await;
         assert!(result.is_ok(), "{:?}", result.err());
         let data = result.unwrap();
         assert!(data.len() > 0, "expected atleast 1 record");
@@ -161,6 +165,7 @@ mod test_firewall_rule {
             id: None,
             ip: [192, 168, 211, 1],
             cidr: 32,
+            layer: 4,
             status: false,
             protocol: IpProtocol::Tcp,
             from_port: Some(2000),
@@ -173,6 +178,7 @@ mod test_firewall_rule {
             id: None,
             ip: [192, 168, 211, 1],
             cidr: 32,
+            layer: 3,
             status: false,
             protocol: IpProtocol::Icmp,
             from_port: None,

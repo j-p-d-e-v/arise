@@ -8,9 +8,17 @@ use toml;
 pub struct ApiServerConfig {
     pub base_url: String,
 }
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct EbpfConfig {
+    pub layer: u8,
+    pub interface: String,
+    pub fwr_update_duration: u64,
+}
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AppConfig {
     pub api_server: ApiServerConfig,
+    pub ebpf: EbpfConfig,
 }
 
 impl AppConfig {
