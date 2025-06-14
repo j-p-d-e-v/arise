@@ -18,7 +18,12 @@ pub struct EbpfConfig {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct AppConfig {
     pub api_server: ApiServerConfig,
+    pub server: ServerConfig,
     pub ebpf: EbpfConfig,
+}
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct ServerConfig {
+    pub server_ip: String,
 }
 
 impl AppConfig {

@@ -26,3 +26,8 @@ The platform features:
 
 - ⚡ **High Performance**  
   Leveraging eBPF ensures observability with minimal performance impact.
+
+
+  # SurrealDB
+
+   surreal start --user root --password root --bind=0.0.0.0:4050 rocksdb:netstudio.db

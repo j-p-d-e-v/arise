@@ -19,12 +19,12 @@ impl std::fmt::Display for IpProtocol {
     }
 }
 
-pub fn get_protocol(protocol: IpProtocol) -> IpProto {
+pub fn get_protocol(protocol: &IpProtocol) -> IpProto {
     match protocol {
-        IpProtocol::Tcp => IpProto::Tcp,
-        IpProtocol::Udp => IpProto::Udp,
-        IpProtocol::Icmp => IpProto::Icmp,
-        IpProtocol::Undefined => IpProto::Tcp,
+        &IpProtocol::Tcp => IpProto::Tcp,
+        &IpProtocol::Udp => IpProto::Udp,
+        &IpProtocol::Icmp => IpProto::Icmp,
+        &IpProtocol::Undefined => IpProto::Tcp,
     }
 }
 

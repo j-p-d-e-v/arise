@@ -6,7 +6,8 @@ use crate::protocol::IpProtocol;
 #[derive(Clone, Copy, Debug, Pod, Zeroable)]
 pub struct FirewallLog {
     pub ip: [u8; 4],
-    pub port: u16,
+    pub source_port: u16,
+    pub dest_port: u16,
     pub protocol: u8,
     pub status: u8,
 }
@@ -14,7 +15,9 @@ pub struct FirewallLog {
 #[derive(Clone, Debug, Deserialize, Serialize)]
 pub struct FirewallLogData {
     pub ip: [u8; 4],
+    pub server_ip: String,
     pub protocol: IpProtocol,
-    pub port: Option<u16>,
+    pub source_port: Option<u16>,
+    pub dest_port: Option<u16>,
     pub status: bool,
 }

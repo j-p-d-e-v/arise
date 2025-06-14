@@ -6,9 +6,9 @@ use log::{debug, warn};
 use aya::maps::{lpm_trie::LpmTrie, HashMap};
 use ebpf_firewall::{
     api::Api,
-    config::{ApiServerConfig, AppConfig, EbpfConfig},
+    config::{ApiServerConfig, AppConfig, EbpfConfig, ServerConfig},
     maps::{configure_firewall_cidrs, configure_firewall_log, configure_firewall_rules},
-    rule::Rule,
+    rule::{IpProtoKey, Rule},
 };
 use tokio::signal;
 
@@ -47,6 +47,7 @@ async fn main() -> anyhow::Result<()> {
     let layer: u8 = ebpf_config.layer;
     let iface: String = ebpf_config.interface;
     let api_server_config: ApiServerConfig = app_config.api_server;
+    let server_config: ServerConfig = app_config.server;
     let api: Api = Api::new(api_server_config.clone());
     let fwr_update_duration = ebpf_config.fwr_update_duration;
     tokio::task::spawn(async move {
@@ -69,14 +70,16 @@ async fn main() -> anyhow::Result<()> {
         .context("failed to attach the XDP program with default flags - try changing XdpFlags::default() to XdpFlags::SKB_MODE").unwrap();
 
         let firewall_log_map = ebpf.take_map("FIREWALL_LOG").unwrap();
-        if let Err(error) = configure_firewall_log(&api, firewall_log_map).await {
+        if let Err(error) =
+            configure_firewall_log(&api, &server_config.server_ip, firewall_log_map).await
+        {
             panic!("{:?}", error);
         }
         loop {
             for map in ebpf.maps_mut() {
                 let map_key: &str = map.0;
                 if map_key == "FIREWALL_RULES" {
-                    let mut firewall_rules: LpmTrie<_, [u8; 4], Rule> =
+                    let mut firewall_rules: LpmTrie<_, IpProtoKey, Rule> =
                         match LpmTrie::try_from(map.1) {
                             Ok(value) => value,
                             Err(error) => panic!("{:?}", error),

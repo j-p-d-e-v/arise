@@ -22,3 +22,12 @@ pub struct FirewallRuleData {
     pub to_port: Option<u16>,
     pub status: bool,
 }
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug)]
+pub struct IpProtoKey {
+    pub ip: [u8; 4],
+    pub protocol: u8,
+}
+
+unsafe impl Pod for IpProtoKey {}

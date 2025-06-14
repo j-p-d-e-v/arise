@@ -8,8 +8,10 @@ use surrealdb::{Datetime, RecordId};
 pub struct FirewallLogData {
     pub id: Option<RecordId>,
     pub ip: [u8; 4],
+    pub server_ip: String,
     pub protocol: IpProtocol,
-    pub port: Option<u16>,
+    pub source_port: Option<u16>,
+    pub dest_port: Option<u16>,
     pub status: bool,
     pub timestamp: Datetime,
 }
@@ -18,7 +20,9 @@ impl Default for FirewallLogData {
         Self {
             id: None,
             ip: [0; 4],
-            port: None,
+            server_ip: String::new(),
+            dest_port: None,
+            source_port: None,
             protocol: IpProtocol::Undefined,
             status: false,
             timestamp: Datetime::from(Utc::now()),
@@ -112,8 +116,10 @@ mod test_firewall_log {
             id: None,
             ip: [192, 168, 211, 128],
             status: false,
+            server_ip: String::from("0.0.0.0"),
             protocol: IpProtocol::Tcp,
-            port: Some(3000),
+            dest_port: Some(3000),
+            source_port: Some(3000),
             timestamp: Datetime::from(Utc::now()),
         };
         let result = api.create(data).await;
@@ -126,8 +132,10 @@ mod test_firewall_log {
             id: None,
             ip: [192, 168, 211, 1],
             status: false,
+            server_ip: String::from("127.0.0.2"),
             protocol: IpProtocol::Tcp,
-            port: Some(2000),
+            source_port: Some(2000),
+            dest_port: Some(2000),
             timestamp: Datetime::from(Utc::now()),
         };
         let result = api.create(data).await;
@@ -137,8 +145,10 @@ mod test_firewall_log {
             id: None,
             ip: [192, 168, 211, 1],
             status: false,
+            server_ip: String::from("127.0.0.1"),
             protocol: IpProtocol::Icmp,
-            port: None,
+            dest_port: None,
+            source_port: None,
             timestamp: Datetime::from(Utc::now()),
         };
         let result = api.create(data).await;
