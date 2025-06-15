@@ -110,20 +110,37 @@ function getExecutedCommands() {
 </script>
 
 <template>
-  <div class="p-3 h-full" id="command-execution-container">
-    <div class="rounded-sm border-1 border-stone-600">
-      <h3 class="p-3 pt-6 pb-0 text-xl font-semibold text-center text-white align-center">
+  <div class="pb-2 mb-5 text-2xl text-white border-b-3">
+    <span class="float-left mt-[2px]">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+        class="lucide lucide-square-terminal-icon lucide-square-terminal">
+        <path d="m7 11 2-2-2-2" />
+        <path d="M11 13h4" />
+        <rect width="18" height="18" x="3" y="3" rx="2" ry="2" />
+      </svg>
+    </span>
+    <span class="float-left ml-3">
+      COMMAND EXECUTION
+    </span>
+    <div style="clear:both;"></div>
+  </div>
+  <div class="h-full" id="command-execution-container">
+    <div class="rounded-sm">
+      <h3 class="pb-1 font-semibold text-left text-white align-center">
         Command Execution Counts Chart
       </h3>
-      <div id="command-execution-chart"></div>
+      <div class="border-1 border-neutral-300">
+        <div id="command-execution-chart" class="w-full h-full border-1"></div>
+      </div>
       <div class="content-center pb-15 h-[30px]" align="center">
         <span class="text-white loading loading-spinner loading-sm" v-if="stats_loader"></span>
       </div>
     </div>
     <template v-if="paginated_data">
-      <div class="p-6 mt-3 rounded-sm border-1 border-stone-600">
+      <div class="mt-3 rounded-sm">
         <h3 class="p-0 mb-3 font-semibold text-white">Recently Executed Commands</h3>
-        <table class="table text-white border-1 border-stone-600 table-sm">
+        <table class="table text-white border-1 table-sm">
           <thead>
             <tr>
               <th>Command</th>
@@ -153,12 +170,10 @@ function getExecutedCommands() {
 </template>
 
 <style scoped>
-#command-execution-container {
-  background-color: rgba(51, 51, 51, 1);
-}
+#command-execution-container {}
 
 #command-execution-chart {
   width: auto;
-  height: 700px;
+  min-height: 700px;
 }
 </style>

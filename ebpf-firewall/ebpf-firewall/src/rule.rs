@@ -9,6 +9,7 @@ pub struct Rule {
     pub from_port: Option<u16>,
     pub to_port: Option<u16>,
     pub status: bool,
+    pub cidr: u8,
     pub protocol: IpProto,
 }
 unsafe impl Pod for Rule {}
@@ -23,11 +24,13 @@ pub struct FirewallRuleData {
     pub status: bool,
 }
 
+// Order of attributes is important it should be protocol then ip
+// because first 8 bits will be the protocol then ip will be based on cidr
 #[repr(C)]
 #[derive(Clone, Copy, Debug)]
 pub struct IpProtoKey {
-    pub ip: [u8; 4],
     pub protocol: u8,
+    pub ip: [u8; 4],
 }
 
 unsafe impl Pod for IpProtoKey {}

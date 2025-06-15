@@ -29,7 +29,10 @@ async fn main() -> Result<(), String> {
     env_logger::init();
     let db: Arc<Db> = Arc::new(Db::new(database_server_config).await?);
     match HttpServer::new(move || {
-        let cors = Cors::default().allow_any_origin();
+        let cors = Cors::default()
+            .allow_any_origin()
+            .allow_any_header()
+            .allow_any_method();
         App::new()
             .wrap(cors)
             .app_data(web::Data::new(AppState { db: db.clone() }))
@@ -48,13 +51,14 @@ async fn main() -> Result<(), String> {
             )
             .service(
                 web::scope("/firewall-rule")
-                    .route(
-                        "/list/{layer}",
-                        web::get().to(firewall_rule::get_firewall_rules),
-                    )
+                    .route("/list", web::get().to(firewall_rule::get_firewall_rules))
                     .route(
                         "/create",
                         web::post().to(firewall_rule::create_firewall_rule),
+                    )
+                    .route(
+                        "/remove/{id}",
+                        web::delete().to(firewall_rule::remove_firewall_rule),
                     ),
             )
             .service(

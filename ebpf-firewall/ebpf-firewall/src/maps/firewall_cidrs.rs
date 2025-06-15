@@ -6,10 +6,9 @@ use crate::{api::Api, rule::FirewallRuleData};
 
 pub async fn configure_firewall_cidrs(
     api: &Api,
-    layer: u8,
     firewall_cidrs: &mut HashMap<&mut MapData, u16, u16>,
 ) -> Result<(), Error> {
-    let data: Vec<FirewallRuleData> = match api.load_firewall_rules(layer).await {
+    let data: Vec<FirewallRuleData> = match api.load_firewall_rules().await {
         Ok(value) => value,
         Err(error) => return Err(anyhow!(error.to_string())),
     };

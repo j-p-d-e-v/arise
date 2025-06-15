@@ -3,24 +3,40 @@ use crate::models::firewall_rule::{FirewallRule, FirewallRuleData};
 use crate::AppState;
 use actix_web::{web, HttpResponse, Responder};
 use serde::Deserialize;
+use std::str::FromStr;
+use surrealdb::RecordId;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct FirewallRuleForm {
     pub ip: [u8; 4],
     pub protocol: IpProtocol,
     pub cidr: u16,
-    pub layer: u8,
     pub from_port: Option<u16>,
     pub to_port: Option<u16>,
     pub status: bool,
 }
-pub async fn get_firewall_rules(
-    path: web::Path<u8>,
+pub async fn get_firewall_rules(app_state: web::Data<AppState>) -> impl Responder {
+    let api = FirewallRule::new(app_state.db.clone());
+    match api.list().await {
+        Ok(data) => HttpResponse::Ok().json(data),
+        Err(error) => HttpResponse::BadRequest().body(error),
+    }
+}
+
+pub async fn remove_firewall_rule(
+    path: web::Path<(String,)>,
     app_state: web::Data<AppState>,
 ) -> impl Responder {
-    let layer = path.into_inner();
+    let path = path.into_inner();
+    let id = path.0;
+    let record_id = match RecordId::from_str(&id) {
+        Ok(value) => value,
+        Err(err) => {
+            return HttpResponse::BadRequest().body(err.to_string());
+        }
+    };
     let api = FirewallRule::new(app_state.db.clone());
-    match api.list(layer).await {
+    match api.remove(record_id).await {
         Ok(data) => HttpResponse::Ok().json(data),
         Err(error) => HttpResponse::BadRequest().body(error),
     }

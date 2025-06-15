@@ -4,20 +4,18 @@ use aya::maps::{
     MapData,
 };
 use log::{info, warn};
-use crate::rule::IpProtoKey;
 
 use crate::{
     api::Api,
     protocol::get_protocol,
-    rule::{FirewallRuleData, Rule},
+    rule::{FirewallRuleData, IpProtoKey, Rule},
 };
 
 pub async fn configure_firewall_rules(
     api: &Api,
-    layer: u8,
     firewall_rules: &mut LpmTrie<&mut MapData, IpProtoKey, Rule>,
 ) -> Result<(), Error> {
-    let data: Vec<FirewallRuleData> = match api.load_firewall_rules(layer).await {
+    let data: Vec<FirewallRuleData> = match api.load_firewall_rules().await {
         Ok(value) => value,
         Err(error) => return Err(anyhow!(error.to_string())),
     };
@@ -38,17 +36,23 @@ pub async fn configure_firewall_rules(
         }
     }
     for item in data {
-        let key = Key::new(item.cidr as u32, IpProtoKey {
-            ip: item.ip,
-            protocol: get_protocol(&item.protocol) as u8,
-        });
+        let prefix_length = (item.cidr + 8) as u32;
+        let key = Key::new(
+            prefix_length,
+            IpProtoKey {
+                protocol: get_protocol(&item.protocol) as u8,
+                ip: item.ip,
+            },
+        );
         let rule: Rule = Rule {
             from_port: item.from_port,
             to_port: item.to_port,
             status: item.status,
+            cidr: item.cidr as u8,
             protocol: get_protocol(&item.protocol),
         };
-        if let Err(error) = firewall_rules.insert(&key, &rule, 0) {
+
+       if let Err(error) = firewall_rules.insert(&key, &rule, 0) {
             warn!("[FIREWALL RULES WARN] {:?}", error);
         }
     }

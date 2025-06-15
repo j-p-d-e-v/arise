@@ -68,15 +68,16 @@ impl FirewallLog {
         }
     }
 
-    pub async fn list(&self, status: bool, limit: usize) -> Result<Vec<FirewallLogData>, String> {
+    pub async fn list(&self, limit: usize) -> Result<Vec<FirewallLogData>, String> {
         let _ = self.db.connect().await?;
 
         match self.db.get_client().read() {
             Ok(db_client) => {
                 match db_client
-                    .query("SELECT * FROM type::table($table) WHERE status=$status LIMIT $limit;")
+                    .query(
+                        "SELECT * FROM type::table($table) ORDER BY timestamp DESC LIMIT $limit;",
+                    )
                     .bind(("table", Self::table()))
-                    .bind(("status", status))
                     .bind(("limit", limit))
                     .await
                 {
@@ -124,7 +125,7 @@ mod test_firewall_log {
         };
         let result = api.create(data).await;
         assert!(result.is_ok(), "{:?}", result.err());
-        let result = api.list(false, 9999).await;
+        let result = api.list(9999).await;
         assert!(result.is_ok(), "{:?}", result.err());
         let data = result.unwrap();
         assert!(data.len() > 0, "expected atleast 1 record");

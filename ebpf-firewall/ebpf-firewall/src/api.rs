@@ -25,11 +25,8 @@ impl Api {
         Ok(data)
     }
 
-    pub async fn load_firewall_rules(
-        &self,
-        layer: u8,
-    ) -> Result<Vec<FirewallRuleData>, anyhow::Error> {
-        let url: String = format!("{}/firewall-rule/list/{}", self.base_url, layer);
+    pub async fn load_firewall_rules(&self) -> Result<Vec<FirewallRuleData>, anyhow::Error> {
+        let url: String = format!("{}/firewall-rule/list", self.base_url);
         let response = reqwest::get(url).await?;
         let data = response.json::<Vec<FirewallRuleData>>().await?;
         Ok(data)
@@ -50,7 +47,7 @@ pub mod test_api {
         let api_server_config: ApiServerConfig = app_config.unwrap().api_server;
 
         let api: Api = Api::new(api_server_config);
-        let data = api.load_firewall_rules(3).await;
+        let data = api.load_firewall_rules().await;
         assert!(data.is_ok(), "{:?}", data.err());
     }
 }

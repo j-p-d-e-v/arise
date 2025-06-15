@@ -6,7 +6,7 @@ use core::mem;
 use aya_ebpf::{
     bindings::xdp_action,
     macros::{map, xdp},
-    maps::{lpm_trie::Key, HashMap, LpmTrie, PerfEventArray},
+    maps::{lpm_trie::Key, LpmTrie, PerfEventArray},
     programs::XdpContext,
 };
 use aya_log_ebpf::info;
@@ -22,6 +22,7 @@ pub struct Rule {
     pub from_port: Option<u16>,
     pub to_port: Option<u16>,
     pub status: bool,
+    pub cidr: u8,
     pub protocol: IpProto,
 }
 
@@ -38,15 +39,12 @@ pub struct FirewallLog {
 #[repr(C)]
 #[derive(Clone, Copy)]
 pub struct IpProtoKey {
-    pub ip: [u8; 4],
     pub protocol: u8,
+    pub ip: [u8; 4],
 }
 
 #[map]
 static FIREWALL_RULES: LpmTrie<IpProtoKey, Rule> = LpmTrie::with_max_entries(1024, 0);
-
-#[map]
-static FIREWALL_CIDRS: HashMap<u16, u16> = HashMap::with_max_entries(32, 0);
 
 #[map]
 static FIREWALL_LOG: PerfEventArray<FirewallLog> = PerfEventArray::new(0);
@@ -113,16 +111,31 @@ fn checked_firewall_rule(
     let mut rule: Option<&Rule> = None;
     let mut status: bool = true;
     let key: IpProtoKey = IpProtoKey {
-        ip: source_ipv4.clone(),
         protocol: *protocol as u8,
+        ip: source_ipv4.clone(),
     };
     for value in 0..33 {
-        let index: u16 = 32 - value;
-        if let Some(prefix_length) = unsafe { FIREWALL_CIDRS.get(&index) } {
-            let source_key = Key::new(*prefix_length as u32, key);
-            if let Some(item) = FIREWALL_RULES.get(&source_key) {
+        let _cidr: u8 = 32 - value;
+        let prefix_length: u32 = _cidr as u32 + 8;
+        let source_key = Key::new(prefix_length, key);
+        if let Some(item) = FIREWALL_RULES.get(&source_key) {
+            info!(
+                ctx,
+                "found rule cidr: {}:{} from: {}, to:{}, status: {}, protocol: {}, IP Address: {}.{}.{}.{}",
+                item.cidr,
+                _cidr,
+                item.from_port.unwrap_or(0),
+                item.to_port.unwrap_or(0),
+                if item.status { "true" } else { "false" },
+                item.protocol as u8,
+                source_ipv4[0],
+                source_ipv4[1],
+                source_ipv4[2],
+                source_ipv4[3],
+            );
+
+            if item.cidr == _cidr && &item.protocol == protocol {
                 rule = Some(item);
-                break;
             }
         }
     }
@@ -131,8 +144,24 @@ fn checked_firewall_rule(
             if check_port(dest_port, rule.from_port, rule.to_port) {
                 status = rule.status;
             }
+
+            if protocol == &IpProto::Icmp {
+                //     info!(ctx, "i got a destination port which should be none");
+            }
         } else {
             status = rule.status;
+        }
+        if protocol == &IpProto::Icmp {
+            //  info!(
+            //      ctx,
+            //      ">> found rule status: {}, protocol: {}, IP Address: {}.{}.{}.{}",
+            //      if status { "true" } else { "false" },
+            //      *protocol as u8,
+            //      source_ipv4[0],
+            //      source_ipv4[1],
+            //      source_ipv4[2],
+            //      source_ipv4[3],
+            //  );
         }
     }
     if status {

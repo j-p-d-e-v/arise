@@ -6,7 +6,6 @@ use serde::Deserialize;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct GetFirewallLogsFilter {
-    pub status: bool,
     pub limit: usize,
 }
 
@@ -25,11 +24,12 @@ pub async fn get_firewall_logs(
 ) -> impl Responder {
     let filter = query.into_inner();
     let api = FirewallLog::new(app_state.db.clone());
-    match api.list(filter.status, filter.limit).await {
+    match api.list(filter.limit).await {
         Ok(data) => HttpResponse::Ok().json(data),
         Err(error) => HttpResponse::BadRequest().body(error),
     }
 }
+
 pub async fn create_firewall_log(
     form: web::Json<FirewallLogForm>,
     app_state: web::Data<AppState>,

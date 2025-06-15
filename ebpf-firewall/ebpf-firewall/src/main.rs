@@ -3,11 +3,11 @@ use aya::programs::{Xdp, XdpFlags};
 use clap::Parser;
 #[rustfmt::skip]
 use log::{debug, warn};
-use aya::maps::{lpm_trie::LpmTrie, HashMap};
+use aya::maps::lpm_trie::LpmTrie;
 use ebpf_firewall::{
     api::Api,
     config::{ApiServerConfig, AppConfig, EbpfConfig, ServerConfig},
-    maps::{configure_firewall_cidrs, configure_firewall_log, configure_firewall_rules},
+    maps::{configure_firewall_log, configure_firewall_rules},
     rule::{IpProtoKey, Rule},
 };
 use tokio::signal;
@@ -44,7 +44,6 @@ async fn main() -> anyhow::Result<()> {
     // runtime. This approach is recommended for most real-world use cases. If you would
     // like to specify the eBPF program at runtime rather than at compile-time, you can
     // reach for `Bpf::load_file` instead.
-    let layer: u8 = ebpf_config.layer;
     let iface: String = ebpf_config.interface;
     let api_server_config: ApiServerConfig = app_config.api_server;
     let server_config: ServerConfig = app_config.server;
@@ -85,19 +84,7 @@ async fn main() -> anyhow::Result<()> {
                             Err(error) => panic!("{:?}", error),
                         };
 
-                    if let Err(error) =
-                        configure_firewall_rules(&api, layer, &mut firewall_rules).await
-                    {
-                        panic!("{:?}", error);
-                    }
-                } else if map_key == "FIREWALL_CIDRS" {
-                    let mut firewall_cidrs: HashMap<_, u16, u16> = match HashMap::try_from(map.1) {
-                        Ok(value) => value,
-                        Err(error) => panic!("{:?}", error),
-                    };
-                    if let Err(error) =
-                        configure_firewall_cidrs(&api, layer, &mut firewall_cidrs).await
-                    {
+                    if let Err(error) = configure_firewall_rules(&api, &mut firewall_rules).await {
                         panic!("{:?}", error);
                     }
                 }
