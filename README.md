@@ -15,11 +15,16 @@ The platform features:
 - 🛡️ **Command Execution Monitoring**  
   Capture and observe commands executed on the system in real-time.
 
-- 🌐 **Network Traffic Monitoring**  
+  ![FirewallGif](./docs/commandexecution.gif)
+
+- 🌐 **Network Traffic Monitoring (Future Feature)**  
   Track inbound and outbound network activity for greater insight into your environment.
 
-- 🚫 **IP-based Firewall (Whitelist/Blacklist)**  
-  Allow or block traffic dynamically based on IP address policies.
+- 🌐 **Network Traffic Mirroring (Future Feature)**  
+  Duplicate traffic and then send it to another destination.
+
+- 🚫 **IP-based Firewall**  
+  Allow or Deby traffic dynamically based on IP address policies.
 
   ![FirewallGif](./docs/ebffirewall.gif)
 
@@ -30,6 +35,18 @@ The platform features:
   Leveraging eBPF ensures observability with minimal performance impact.
 
 
-  # SurrealDB
+# Build
+```
+cargo build --release
+```
 
-   surreal start --user root --password root --bind=0.0.0.0:4050 rocksdb:netstudio.db
+# Launch SurrealDB
+surreal start --user root --password root --bind=0.0.0.0:4050 rocksdb:arise.db
+
+# Frontend Development
+```
+cd web
+docker-compose up -d
+docker exec -it <container_id>
+yarn dev
+```
