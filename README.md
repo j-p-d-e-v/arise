@@ -21,6 +21,8 @@ The platform features:
 - 🚫 **IP-based Firewall (Whitelist/Blacklist)**  
   Allow or block traffic dynamically based on IP address policies.
 
+  ![FirewallGif](./docs/ebffirewall.gif)
+
 - 📊 **Web Dashboard**  
   Visualize events, network traffic, and firewall logs using an intuitive Vue.js frontend.
 
