@@ -34,6 +34,9 @@ The platform features:
 - ⚡ **High Performance**  
   Leveraging eBPF ensures observability with minimal performance impact.
 
+# Video Demo
+- https://youtu.be/u7v8MNT0-8Q
+- https://www.youtube.com/watch?v=T8fvAxIZE3E
 
 # Build
 ```
